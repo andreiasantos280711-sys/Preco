@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BarberApp — Agendamento</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --green: #1D9E75;
+    --green-dark: #0F6E56;
+    --green-light: #E1F5EE;
+    --green-deep: #085041;
+    --bg: #F7F6F2;
+    --card: #FFFFFF;
+    --border: rgba(0,0,0,0.08);
+    --border-md: rgba(0,0,0,0.14);
+    --text: #1A1A1A;
+    --text-2: #555550;
+    --text-3: #999994;
+    --radius: 14px;
+    --radius-sm: 8px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 24px rgba(0,0,0,0.1);
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── LAYOUT ── */
+  .app-shell {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    background: var(--bg);
+    position: relative;
+  }
+
+  /* ── HEADER ── */
+  .app-header {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 20px 0;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-top {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-icon {
+    width: 36px; height: 36px; background: var(--text);
+    border-radius: 10px; display: flex; align-items: center; justify-content: center;
+  }
+  .logo-icon svg { width: 18px; height: 18px; stroke: white; fill: none; stroke-width: 2; stroke-linecap: round; }
+  .logo-name { font-family: 'DM Serif Display', serif; font-size: 20px; letter-spacing: -0.3px; }
+  .logo-name span { color: var(--green); }
+  .open-badge {
+    font-size: 11px; font-weight: 500; padding: 4px 10px;
+    background: var(--green-light); color: var(--green-deep);
+    border-radius: 99px; display: flex; align-items: center; gap: 5px;
+  }
+  .open-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* ── TABS ── */
+  .tabs {
+    display: flex; gap: 0;
+  }
+  .tab-btn {
+    flex: 1; padding: 12px 8px; font-size: 13px; font-weight: 500;
+    border: none; background: transparent; cursor: pointer; color: var(--text-3);
+    border-bottom: 2px solid transparent; transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .tab-btn.active { color: var(--text); border-bottom-color: var(--green); }
+
+  /* ── CONTENT ── */
+  .tab-content { display: none; padding: 20px; animation: fadeIn 0.2s ease; }
+  .tab-content.active { display: block; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+
+  /* ── STEPS ── */
+  .step-bar {
+    display: flex; align-items: center; gap: 4px;
+    margin-bottom: 22px; overflow-x: auto; padding-bottom: 2px;
+  }
+  .step-bar::-webkit-scrollbar { display: none; }
+  .step-item { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+  .step-circle {
+    width: 22px; height: 22px; border-radius: 50%; font-size: 11px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    background: #eee; color: var(--text-3); transition: all 0.2s; flex-shrink: 0;
+  }
+  .step-circle.active { background: var(--text); color: white; }
+  .step-circle.done { background: var(--green); color: white; }
+  .step-label { font-size: 11px; color: var(--text-3); }
+  .step-label.active { color: var(--text); font-weight: 500; }
+  .step-sep { font-size: 10px; color: #ccc; margin: 0 2px; }
+
+  /* ── SECTION LABEL ── */
+  .sec-label {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.07em;
+    text-transform: uppercase; color: var(--text-3); margin-bottom: 12px;
+  }
+
+  /* ── BARBER CARDS ── */
+  .barber-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+  .barber-card {
+    background: var(--card); border-radius: var(--radius);
+    border: 1.5px solid var(--border); padding: 14px 16px;
+    display: flex; align-items: center; gap: 14px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .barber-card:hover { border-color: var(--border-md); box-shadow: var(--shadow); }
+  .barber-card.selected { border-color: var(--green); background: var(--green-light); }
+  .barber-avatar {
+    width: 48px; height: 48px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 600; flex-shrink: 0;
+  }
+  .barber-info { flex: 1; }
+  .barber-name { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+  .barber-spec { font-size: 12px; color: var(--text-2); }
+  .barber-check {
+    width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--border-md);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .barber-card.selected .barber-check { background: var(--green); border-color: var(--green); }
+  .barber-check svg { width: 12px; height: 12px; stroke: white; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; opacity: 0; transition: opacity 0.2s; }
+  .barber-card.selected .barber-check svg { opacity: 1; }
+
+  /* ── SERVICE GRID ── */
+  .service-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .service-card {
+    background: var(--card); border-radius: var(--radius);
+    border: 1.5px solid var(--border); padding: 14px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .service-card:hover { border-color: var(--border-md); box-shadow: var(--shadow); }
+  .service-card.selected { border-color: var(--green); background: var(--green-light); }
+  .service-icon { font-size: 22px; margin-bottom: 8px; }
+  .service-name { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .service-meta { font-size: 11px; color: var(--text-2); }
+  .service-price { font-size: 14px; font-weight: 600; color: var(--green-dark); margin-top: 6px; }
+
+  /* ── CALENDAR ── */
+  .calendar { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); padding: 16px; margin-bottom: 16px; }
+  .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .cal-month-label { font-size: 15px; font-weight: 600; }
+  .cal-arrow {
+    width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border);
+    background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .cal-arrow:hover { background: var(--bg); }
+  .cal-arrow svg { width: 14px; height: 14px; stroke: var(--text-2); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .cal-weekdays { display: grid; grid-template-columns: repeat(7,1fr); text-align: center; margin-bottom: 6px; }
+  .cal-weekday { font-size: 11px; color: var(--text-3); padding: 4px 0; font-weight: 500; }
+  .cal-days { display: grid; grid-template-columns: repeat(7,1fr); gap: 2px; }
+  .cal-day {
+    aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+    font-size: 13px; border-radius: 8px; cursor: pointer; transition: all 0.15s;
+  }
+  .cal-day:hover:not(.disabled):not(.empty) { background: var(--bg); }
+  .cal-day.today { font-weight: 700; border: 1.5px solid var(--border-md); }
+  .cal-day.selected { background: var(--green); color: white; font-weight: 600; }
+  .cal-day.disabled { color: var(--text-3); cursor: default; font-size: 12px; }
+  .cal-day.empty { cursor: default; }
+
+  /* ── TIME SLOTS ── */
+  .time-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 20px; }
+  .time-slot {
+    padding: 9px 4px; text-align: center; border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border); font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: all 0.15s; background: var(--card); color: var(--text);
+  }
+  .time-slot:hover:not(.unavail) { border-color: var(--border-md); box-shadow: var(--shadow); }
+  .time-slot.selected { border-color: var(--green); background: var(--green-light); color: var(--green-deep); }
+  .time-slot.unavail { background: var(--bg); color: var(--text-3); cursor: not-allowed; text-decoration: line-through; font-weight: 400; }
+
+  /* ── FORM ── */
+  .form-group { margin-bottom: 14px; }
+  .form-label { font-size: 12px; font-weight: 600; color: var(--text-2); margin-bottom: 6px; display: block; }
+  .form-input {
+    width: 100%; padding: 12px 14px; border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border); font-size: 14px; font-family: 'DM Sans', sans-serif;
+    color: var(--text); background: var(--card); transition: border-color 0.15s; outline: none;
+  }
+  .form-input:focus { border-color: var(--green); }
+  .form-input::placeholder { color: var(--text-3); }
+  .consent-row {
+    display: flex; align-items: flex-start; gap: 10px;
+    background: var(--card); border-radius: var(--radius-sm);
+    border: 1px solid var(--border); padding: 12px 14px; margin-top: 6px;
+  }
+  .consent-row input[type=checkbox] { width: 16px; height: 16px; flex-shrink: 0; accent-color: var(--green); margin-top: 1px; }
+  .consent-text { font-size: 12px; color: var(--text-2); line-height: 1.5; }
+  .consent-text strong { color: var(--text); }
+
+  /* ── SUMMARY ── */
+  .summary-card {
+    background: var(--card); border-radius: var(--radius);
+    border: 1px solid var(--border); overflow: hidden; margin-bottom: 20px;
+  }
+  .summary-header {
+    background: var(--text); padding: 16px 18px;
+    font-family: 'DM Serif Display', serif; font-size: 17px; color: white;
+  }
+  .summary-body { padding: 4px 0; }
+  .summary-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 11px 18px; border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+  .summary-row:last-child { border-bottom: none; }
+  .summary-key { color: var(--text-2); }
+  .summary-val { font-weight: 600; text-align: right; max-width: 60%; }
+  .summary-price { color: var(--green-dark); font-size: 16px; }
+
+  /* ── BUTTONS ── */
+  .btn-row { display: flex; gap: 10px; justify-content: flex-end; }
+  .btn-primary {
+    background: var(--green); color: white; border: none;
+    padding: 13px 22px; border-radius: var(--radius-sm); font-size: 14px;
+    font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s; display: flex; align-items: center; gap: 6px;
+  }
+  .btn-primary:hover { background: var(--green-dark); transform: translateY(-1px); }
+  .btn-primary:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+  .btn-ghost {
+    background: transparent; color: var(--text-2); border: 1.5px solid var(--border);
+    padding: 13px 18px; border-radius: var(--radius-sm); font-size: 14px;
+    font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s;
+  }
+  .btn-ghost:hover { border-color: var(--border-md); background: var(--card); }
+  .btn-wpp {
+    width: 100%; background: #25D366; color: white; border: none;
+    padding: 14px 22px; border-radius: var(--radius-sm); font-size: 15px;
+    font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin-bottom: 10px;
+  }
+  .btn-wpp:hover { background: #1da851; }
+
+  /* ── SUCCESS ── */
+  .success-wrap { text-align: center; padding: 30px 10px; }
+  .success-icon {
+    width: 72px; height: 72px; border-radius: 50%; background: var(--green-light);
+    display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;
+  }
+  .success-icon svg { width: 32px; height: 32px; stroke: var(--green); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .success-title { font-family: 'DM Serif Display', serif; font-size: 24px; margin-bottom: 8px; }
+  .success-sub { font-size: 14px; color: var(--text-2); margin-bottom: 24px; line-height: 1.6; }
+
+  /* ── AGENDA ── */
+  .agenda-header { margin-bottom: 16px; }
+  .agenda-date { font-family: 'DM Serif Display', serif; font-size: 22px; margin-bottom: 4px; }
+  .agenda-count { font-size: 13px; color: var(--text-2); }
+  .filter-row { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  .filter-btn {
+    padding: 6px 14px; border-radius: 99px; font-size: 12px; font-weight: 500;
+    cursor: pointer; border: 1.5px solid var(--border); background: var(--card);
+    color: var(--text-2); transition: all 0.15s; font-family: 'DM Sans', sans-serif;
+  }
+  .filter-btn.active { background: var(--text); color: white; border-color: var(--text); }
+  .agenda-list { display: flex; flex-direction: column; gap: 8px; }
+  .agenda-item {
+    background: var(--card); border-radius: var(--radius);
+    border: 1px solid var(--border); padding: 14px 16px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .agenda-time-col { min-width: 46px; text-align: center; }
+  .agenda-hour { font-size: 14px; font-weight: 700; }
+  .agenda-dur { font-size: 10px; color: var(--text-3); margin-top: 2px; }
+  .divider-v { width: 1px; height: 40px; background: var(--border); flex-shrink: 0; }
+  .agenda-avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+  .agenda-body { flex: 1; min-width: 0; }
+  .agenda-client { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .agenda-detail { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+  .status-badge {
+    font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 99px; flex-shrink: 0;
+  }
+  .status-conf { background: var(--green-light); color: var(--green-deep); }
+  .status-wait { background: #FAEEDA; color: #633806; }
+
+  /* ── CLIENTES TAB ── */
+  .clients-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .clients-title { font-family: 'DM Serif Display', serif; font-size: 22px; }
+  .clients-count-badge {
+    font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 99px;
+    background: var(--green-light); color: var(--green-deep);
+  }
+  .search-box {
+    width: 100%; padding: 11px 14px; border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border); font-size: 13px; font-family: 'DM Sans', sans-serif;
+    margin-bottom: 14px; outline: none; transition: border-color 0.15s; background: var(--card);
+  }
+  .search-box:focus { border-color: var(--green); }
+  .client-list { display: flex; flex-direction: column; gap: 8px; }
+  .client-card {
+    background: var(--card); border-radius: var(--radius);
+    border: 1px solid var(--border); padding: 14px 16px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .client-avatar {
+    width: 42px; height: 42px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; flex-shrink: 0;
+  }
+  .client-info { flex: 1; min-width: 0; }
+  .client-name { font-size: 14px; font-weight: 600; }
+  .client-meta { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+  .client-wpp {
+    font-size: 11px; font-weight: 600; padding: 5px 10px; border-radius: 8px;
+    background: #E8FBF0; color: #1a7a48; cursor: pointer; border: none;
+    font-family: 'DM Sans', sans-serif; text-decoration: none; display: inline-block;
+    transition: background 0.15s;
+  }
+  .client-wpp:hover { background: #c8f5da; }
+  .export-btn {
+    width: 100%; padding: 13px; border-radius: var(--radius-sm);
+    border: 1.5px dashed var(--border-md); background: transparent;
+    font-size: 13px; font-weight: 600; color: var(--text-2); cursor: pointer;
+    font-family: 'DM Sans', sans-serif; margin-top: 14px; transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .export-btn:hover { background: var(--card); border-color: var(--green); color: var(--green-dark); }
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text-3); font-size: 14px; }
+
+  /* ── INFO BOX ── */
+  .info-box {
+    background: #EFF8FF; border: 1px solid #B5D4F4; border-radius: var(--radius-sm);
+    padding: 12px 14px; font-size: 13px; color: #185FA5; line-height: 1.5; margin-bottom: 16px;
+  }
+  .info-box strong { font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- HEADER -->
+  <div class="app-header">
+    <div class="header-top">
+      <div class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24"><path d="M6 3l6 6 6-6M6 21l6-6 6 6M12 9v6"/></svg>
+        </div>
+        <div class="logo-name">Barber<span>Shop</span></div>
+      </div>
+      <div class="open-badge"><span class="open-dot"></span> Aberto</div>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('agendar')">✂ Agendar</button>
+      <button class="tab-btn" onclick="switchTab('agenda')">📋 Agenda</button>
+      <button class="tab-btn" onclick="switchTab('clientes')">👥 Clientes</button>
+    </div>
+  </div>
+
+  <!-- ABA AGENDAR -->
+  <div class="tab-content active" id="tab-agendar">
+    <div id="booking-content"></div>
+  </div>
+
+  <!-- ABA AGENDA -->
+  <div class="tab-content" id="tab-agenda">
+    <div class="agenda-header">
+      <div class="agenda-date">Hoje, 28 de maio</div>
+      <div class="agenda-count" id="agenda-count"></div>
+    </div>
+    <div class="filter-row" id="filter-row"></div>
+    <div class="agenda-list" id="agenda-list"></div>
+  </div>
+
+  <!-- ABA CLIENTES -->
+  <div class="tab-content" id="tab-clientes">
+    <div class="clients-header">
+      <div class="clients-title">Base de clientes</div>
+      <div class="clients-count-badge" id="clients-badge"></div>
+    </div>
+    <div class="info-box">
+      <strong>📌 Como funciona:</strong> todo cliente que agenda pelo app entra automaticamente nesta base. Você pode buscar, ver histórico e enviar WhatsApp direto.
+    </div>
+    <input class="search-box" type="text" placeholder="Buscar por nome ou telefone…" oninput="filterClients(this.value)" />
+    <div class="client-list" id="client-list"></div>
+    <button class="export-btn" onclick="exportCSV()">⬇ Exportar base em CSV</button>
+  </div>
+
+</div>
+
+<script>
+// ── DATA ──
+const BARBEIROS = [
+  { id:1, nome:"Caio",      spec:"Degradê & corte clássico", avatar:"CA", av:"av1" },
+  { id:2, nome:"Leonardo",  spec:"Barba & navalhado",         avatar:"LE", av:"av2" },
+  { id:3, nome:"Cubano",    spec:"Coloração & modernos",      avatar:"CU", av:"av3" },
+];
+const AV_COLORS = { av1:"#E6F1FB:#0C447C", av2:"#FAECE7:#712B13", av3:"#EEEDFE:#3C3489", av4:"#E1F5EE:#085041", av5:"#FAEEDA:#633806" };
+
+const SERVICOS = [
+  { id:1, nome:"Corte",        dur:"30 min", preco:"R$ 40", icon:"✂️" },
+  { id:2, nome:"Barba",        dur:"25 min", preco:"R$ 30", icon:"🪒" },
+  { id:3, nome:"Corte + Barba",dur:"50 min", preco:"R$ 65", icon:"⭐" },
+  { id:4, nome:"Degradê",      dur:"40 min", preco:"R$ 50", icon:"💈" },
+  { id:5, nome:"Coloração",    dur:"90 min", preco:"R$ 120",icon:"🎨" },
+  { id:6, nome:"Hidratação",   dur:"30 min", preco:"R$ 35", icon:"💧" },
+];
+const HORARIOS = ["08:00","08:30","09:00","09:30","10:00","10:30","11:00","11:30",
+                  "13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30","18:00","18:30"];
+const INDISPONIVEIS = ["09:00","10:30","14:00","17:00"];
+
+// Agenda do dia (exemplos)
+const AGENDA_HOJE = [
+  { cliente:"Ana Beatriz", av:"av4", servico:"Corte + Barba", barbeiro:"Caio",     hora:"08:00", dur:"50min", status:"confirmado" },
+  { cliente:"Carlos M.",   av:"av1", servico:"Degradê",       barbeiro:"Caio",     hora:"09:30", dur:"40min", status:"confirmado" },
+  { cliente:"Fernanda L.", av:"av3", servico:"Coloração",     barbeiro:"Cubano",   hora:"10:00", dur:"90min", status:"confirmado" },
+  { cliente:"João Paulo",  av:"av5", servico:"Barba",         barbeiro:"Leonardo", hora:"11:00", dur:"25min", status:"aguardando" },
+  { cliente:"Marcos D.",   av:"av1", servico:"Corte",         barbeiro:"Caio",     hora:"13:00", dur:"30min", status:"confirmado" },
+  { cliente:"Ricardo N.",  av:"av2", servico:"Corte + Barba", barbeiro:"Leonardo", hora:"14:30", dur:"50min", status:"aguardando" },
+];
+
+// Base de clientes (começa com exemplos + cresce com novos agendamentos)
+let CLIENTES = JSON.parse(localStorage.getItem('barber_clientes') || 'null') || [
+  { nome:"Ana Beatriz Santos",  tel:"27999001001", wpp:"5527999001001", barbeiro:"Caio",     servico:"Corte + Barba", data:"2026-05-28", agendamentos:3 },
+  { nome:"Carlos Melo",         tel:"27999002002", wpp:"5527999002002", barbeiro:"Caio",     servico:"Degradê",       data:"2026-05-28", agendamentos:1 },
+  { nome:"Fernanda Lima",       tel:"27999003003", wpp:"5527999003003", barbeiro:"Cubano",   servico:"Coloração",     data:"2026-05-28", agendamentos:5 },
+  { nome:"João Paulo Reis",     tel:"27999004004", wpp:"5527999004004", barbeiro:"Leonardo", servico:"Barba",         data:"2026-05-27", agendamentos:2 },
+  { nome:"Marcos Dias",         tel:"27999005005", wpp:"5527999005005", barbeiro:"Caio",     servico:"Corte",         data:"2026-05-26", agendamentos:4 },
+];
+function saveClientes() { localStorage.setItem('barber_clientes', JSON.stringify(CLIENTES)); }
+
+// ── BOOKING STATE ──
+let S = { step:1, barbeiro:null, servico:null, data:null, horario:null, nome:"", tel:"", consent:false };
+let calM=4, calY=2026; // maio = 4 (0-indexed)
+
+// ── TAB SWITCH ──
+function switchTab(t) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+  event.target.classList.add('active');
+  if (t==='agenda') renderAgenda();
+  if (t==='clientes') renderClientes();
+}
+
+// ── AVATAR HELPER ──
+function avStyle(key) {
+  const c = AV_COLORS[key] || "#eee:#555";
+  const [bg,fg] = c.split(':');
+  return `background:${bg};color:${fg}`;
+}
+
+// ── RENDER BOOKING ──
+function renderBooking() {
+  const steps = ["Barbeiro","Serviço","Data","Dados","Confirmar"];
+  const bar = `<div class="step-bar">${steps.map((s,i)=>{
+    const n=i+1, done=n<S.step, active=n===S.step;
+    return `<div class="step-item">
+      <span class="step-circle ${done?'done':active?'active':''}">${done?'✓':n}</span>
+      <span class="step-label ${active?'active':''}">${s}</span>
+    </div>${n<steps.length?'<span class="step-sep">›</span>':''}`;
+  }).join('')}</div>`;
+
+  let body = '';
+  if (S.step===1) body = renderS1();
+  else if (S.step===2) body = renderS2();
+  else if (S.step===3) body = renderS3();
+  else if (S.step===4) body = renderS4();
+  else if (S.step===5) body = renderS5();
+  else body = renderSuccess();
+
+  document.getElementById('booking-content').innerHTML = (S.step<=5 ? bar : '') + body;
+}
+
+function renderS1() {
+  return `<div class="sec-label">Escolha seu barbeiro</div>
+  <div class="barber-grid">${BARBEIROS.map(b=>`
+    <div class="barber-card ${S.barbeiro===b.id?'selected':''}" onclick="pick('barbeiro',${b.id})">
+      <div class="barber-avatar" style="${avStyle(b.av)}">${b.avatar}</div>
+      <div class="barber-info">
+        <div class="barber-name">${b.nome}</div>
+        <div class="barber-spec">${b.spec}</div>
+      </div>
+      <div class="barber-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+    </div>`).join('')}</div>
+  <div class="btn-row"><button class="btn-primary" onclick="next()" ${S.barbeiro?'':'disabled'}>Próximo →</button></div>`;
+}
+
+function renderS2() {
+  return `<div class="sec-label">Escolha o serviço</div>
+  <div class="service-grid">${SERVICOS.map(sv=>`
+    <div class="service-card ${S.servico===sv.id?'selected':''}" onclick="pick('servico',${sv.id})">
+      <div class="service-icon">${sv.icon}</div>
+      <div class="service-name">${sv.nome}</div>
+      <div class="service-meta">${sv.dur}</div>
+      <div class="service-price">${sv.preco}</div>
+    </div>`).join('')}</div>
+  <div class="btn-row">
+    <button class="btn-ghost" onclick="prev()">← Voltar</button>
+    <button class="btn-primary" onclick="next()" ${S.servico?'':'disabled'}>Próximo →</button>
+  </div>`;
+}
+
+function renderS3() {
+  const months=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+  const wdays=["D","S","T","Q","Q","S","S"];
+  const fd = new Date(calY,calM,1).getDay();
+  const td = new Date(calY,calM+1,0).getDate();
+  const today = new Date(2026,4,28);
+
+  const calHTML = `<div class="calendar">
+    <div class="cal-nav">
+      <button class="cal-arrow" onclick="prevM()"><svg viewBox="0 0 14 14"><polyline points="9,2 4,7 9,12"/></svg></button>
+      <span class="cal-month-label">${months[calM]} ${calY}</span>
+      <button class="cal-arrow" onclick="nextM()"><svg viewBox="0 0 14 14"><polyline points="5,2 10,7 5,12"/></svg></button>
+    </div>
+    <div class="cal-weekdays">${wdays.map(d=>`<div class="cal-weekday">${d}</div>`).join('')}</div>
+    <div class="cal-days">
+      ${Array(fd).fill('<div class="cal-day empty"></div>').join('')}
+      ${Array.from({length:td},(_,i)=>{
+        const d=i+1, dt=new Date(calY,calM,d);
+        const ds=`${calY}-${String(calM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const past = dt < today;
+        const sel = S.data===ds;
+        const isSun = dt.getDay()===0;
+        const cls = sel?'selected':past||isSun?'disabled':'';
+        return `<div class="cal-day ${cls}" onclick="${past||isSun?'':'selData(\''+ds+'\')'}">${d}</div>`;
+      }).join('')}
+    </div>
+  </div>`;
+
+  const timeHTML = S.data ? `
+    <div class="sec-label">Horários disponíveis</div>
+    <div class="time-grid">${HORARIOS.map(h=>{
+      const busy=INDISPONIVEIS.includes(h);
+      return `<div class="time-slot ${busy?'unavail':''} ${S.horario===h&&!busy?'selected':''}" onclick="${busy?'':'selH(\''+h+'\')'}">${h}</div>`;
+    }).join('')}</div>` : `<p style="font-size:13px;color:var(--text-3);margin-bottom:16px;">Selecione uma data para ver os horários ↑</p>`;
+
+  return calHTML + timeHTML + `<div class="btn-row">
+    <button class="btn-ghost" onclick="prev()">← Voltar</button>
+    <button class="btn-primary" onclick="next()" ${S.data&&S.horario?'':'disabled'}>Próximo →</button>
+  </div>`;
+}
+
+function renderS4() {
+  return `<div class="sec-label">Seus dados</div>
+  <div class="form-group">
+    <label class="form-label">Nome completo</label>
+    <input class="form-input" type="text" placeholder="Ex: João da Silva" value="${S.nome}" oninput="S.nome=this.value" />
+  </div>
+  <div class="form-group">
+    <label class="form-label">WhatsApp (com DDD)</label>
+    <input class="form-input" type="tel" placeholder="(27) 99900-0000" value="${S.tel}" oninput="S.tel=this.value.replace(/\D/g,'')" />
+  </div>
+  <div class="consent-row">
+    <input type="checkbox" id="consent" ${S.consent?'checked':''} onchange="S.consent=this.checked" />
+    <label class="consent-text" for="consent">
+      Autorizo que meus dados (nome e WhatsApp) sejam salvos na base de clientes da barbearia para <strong>envio de confirmações, lembretes e promoções</strong>.
+    </label>
+  </div>
+  <div class="btn-row" style="margin-top:16px;">
+    <button class="btn-ghost" onclick="prev()">← Voltar</button>
+    <button class="btn-primary" onclick="goConfirm()" id="btn-confirm-data">Ver resumo →</button>
+  </div>`;
+}
+
+function renderS5() {
+  const b = BARBEIROS.find(x=>x.id===S.barbeiro);
+  const sv = SERVICOS.find(x=>x.id===S.servico);
+  const [y,m,d] = S.data.split('-');
+  const mNomes=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+  const dtFmt = `${d} de ${mNomes[parseInt(m)-1]} de ${y}`;
+  return `<div class="sec-label">Confira e confirme</div>
+  <div class="summary-card">
+    <div class="summary-header">Resumo do agendamento</div>
+    <div class="summary-body">
+      <div class="summary-row"><span class="summary-key">Barbeiro</span><span class="summary-val">${b.nome}</span></div>
+      <div class="summary-row"><span class="summary-key">Serviço</span><span class="summary-val">${sv.nome}</span></div>
+      <div class="summary-row"><span class="summary-key">Data</span><span class="summary-val">${dtFmt}</span></div>
+      <div class="summary-row"><span class="summary-key">Horário</span><span class="summary-val">${S.horario}</span></div>
+      <div class="summary-row"><span class="summary-key">Valor</span><span class="summary-val summary-price">${sv.preco}</span></div>
+      <div class="summary-row"><span class="summary-key">Cliente</span><span class="summary-val">${S.nome}</span></div>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn-ghost" onclick="prev()">← Voltar</button>
+    <button class="btn-primary" onclick="confirmar()">✓ Confirmar agendamento</button>
+  </div>`;
+}
+
+function renderSuccess() {
+  const b = BARBEIROS.find(x=>x.id===S.barbeiro);
+  const sv = SERVICOS.find(x=>x.id===S.servico);
+  const [y,m,d] = S.data.split('-');
+  const mNomes=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+  const dtFmt = `${d}/${m.padStart(2,'0')}/${y}`;
+
+  // Monta mensagem de WhatsApp
+  const tel = S.tel.replace(/\D/g,'');
+  const wppTel = tel.startsWith('55') ? tel : '55'+tel;
+  const msg = encodeURIComponent(
+    `Olá ${S.nome}! 😊\n\nSeu agendamento foi confirmado:\n\n` +
+    `✂ *Serviço:* ${sv.nome}\n` +
+    `💈 *Barbeiro:* ${b.nome}\n` +
+    `📅 *Data:* ${dtFmt}\n` +
+    `🕐 *Horário:* ${S.horario}\n` +
+    `💵 *Valor:* ${sv.preco}\n\n` +
+    `Qualquer dúvida é só chamar aqui!\n_BarberShop_`
+  );
+  const wppLink = `https://wa.me/${wppTel}?text=${msg}`;
+
+  return `<div class="success-wrap">
+    <div class="success-icon">
+      <svg viewBox="0 0 32 32"><polyline points="6,16 13,23 26,10"/></svg>
+    </div>
+    <div class="success-title">Agendado com sucesso!</div>
+    <div class="success-sub">
+      ${S.nome}, seu horário com <strong>${b.nome}</strong> está confirmado.<br>
+      Envie a confirmação via WhatsApp agora:
+    </div>
+    <a class="btn-wpp" href="${wppLink}" target="_blank">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      Enviar confirmação no WhatsApp
+    </a>
+    <button class="btn-ghost" style="width:100%" onclick="resetBooking()">Fazer novo agendamento</button>
+  </div>`;
+}
+
+// ── BOOKING ACTIONS ──
+function pick(key, val) { S[key]=val; renderBooking(); }
+function selData(d) { S.data=d; S.horario=null; renderBooking(); }
+function selH(h) { S.horario=h; renderBooking(); }
+function next() { S.step++; renderBooking(); }
+function prev() { S.step--; renderBooking(); }
+function prevM() { calM--; if(calM<0){calM=11;calY--;} renderBooking(); }
+function nextM() { calM++; if(calM>11){calM=0;calY++;} renderBooking(); }
+
+function goConfirm() {
+  if (!S.nome.trim() || !S.tel.trim()) { alert('Preencha nome e WhatsApp.'); return; }
+  S.step=5; renderBooking();
+}
+
+function confirmar() {
+  // Salva na base de clientes
+  const b = BARBEIROS.find(x=>x.id===S.barbeiro);
+  const sv = SERVICOS.find(x=>x.id===S.servico);
+  const tel = S.tel.replace(/\D/g,'');
+  const existing = CLIENTES.find(c => c.tel === tel);
+  if (existing) {
+    existing.agendamentos++;
+    existing.data = S.data;
+    existing.servico = sv.nome;
+    existing.barbeiro = b.nome;
+  } else if (S.consent) {
+    CLIENTES.push({
+      nome: S.nome.trim(),
+      tel: tel,
+      wpp: tel.startsWith('55') ? tel : '55'+tel,
+      barbeiro: b.nome,
+      servico: sv.nome,
+      data: S.data,
+      agendamentos: 1,
+    });
+  }
+  saveClientes();
+  S.step = 6;
+  renderBooking();
+}
+
+function resetBooking() {
+  S = { step:1, barbeiro:null, servico:null, data:null, horario:null, nome:"", tel:"", consent:false };
+  renderBooking();
+}
+
+// ── RENDER AGENDA ──
+let agendaFilter = "todos";
+function renderAgenda() {
+  const filtered = agendaFilter==="todos" ? AGENDA_HOJE : AGENDA_HOJE.filter(a=>a.barbeiro===agendaFilter);
+  document.getElementById('agenda-count').textContent = filtered.length + ' agendamentos hoje';
+
+  const filters = ["todos","Caio","Leonardo","Cubano"];
+  document.getElementById('filter-row').innerHTML = filters.map(f =>
+    `<button class="filter-btn ${agendaFilter===f?'active':''}" onclick="setFilter('${f}')">${f==="todos"?"Todos":f}</button>`
+  ).join('');
+
+  if (!filtered.length) {
+    document.getElementById('agenda-list').innerHTML = '<div class="empty-state">Nenhum agendamento encontrado</div>';
+    return;
+  }
+  document.getElementById('agenda-list').innerHTML = filtered.map(a => {
+    const col = a.barbeiro==="Caio"?"av1":a.barbeiro==="Leonardo"?"av2":"av3";
+    const [bg,fg] = AV_COLORS[col].split(':');
+    return `<div class="agenda-item">
+      <div class="agenda-time-col">
+        <div class="agenda-hour">${a.hora}</div>
+        <div class="agenda-dur">${a.dur}</div>
+      </div>
+      <div class="divider-v"></div>
+      <div class="agenda-avatar" style="background:${bg};color:${fg};">${a.barbeiro.slice(0,2).toUpperCase()}</div>
+      <div class="agenda-body">
+        <div class="agenda-client">${a.cliente}</div>
+        <div class="agenda-detail">${a.servico} · ${a.barbeiro}</div>
+      </div>
+      <span class="status-badge ${a.status==='confirmado'?'status-conf':'status-wait'}">${a.status}</span>
+    </div>`;
+  }).join('');
+}
+function setFilter(f) { agendaFilter=f; renderAgenda(); }
+
+// ── RENDER CLIENTES ──
+let searchTerm = '';
+function renderClientes() {
+  const filtered = CLIENTES.filter(c =>
+    c.nome.toLowerCase().includes(searchTerm) || c.tel.includes(searchTerm)
+  );
+  document.getElementById('clients-badge').textContent = CLIENTES.length + ' clientes';
+
+  if (!filtered.length) {
+    document.getElementById('client-list').innerHTML = '<div class="empty-state">Nenhum cliente encontrado</div>';
+    return;
+  }
+
+  const avKeys = ["av1","av2","av3","av4","av5"];
+  document.getElementById('client-list').innerHTML = filtered.map((c,i) => {
+    const key = avKeys[i % avKeys.length];
+    const [bg,fg] = AV_COLORS[key].split(':');
+    const initials = c.nome.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+    const telFmt = c.tel.replace(/(\d{2})(\d{2})(\d{5})(\d{4})/, '+$1 ($2) $3-$4');
+    const wppMsg = encodeURIComponent(`Olá ${c.nome.split(' ')[0]}! Tudo bem? 😊 Lembrando que você tem serviços disponíveis na nossa barbearia. Quer agendar?`);
+    return `<div class="client-card">
+      <div class="client-avatar" style="background:${bg};color:${fg};">${initials}</div>
+      <div class="client-info">
+        <div class="client-name">${c.nome}</div>
+        <div class="client-meta">${telFmt} · ${c.agendamentos} agendamento${c.agendamentos!==1?'s':''} · Barbeiro: ${c.barbeiro}</div>
+      </div>
+      <a class="client-wpp" href="https://wa.me/${c.wpp}?text=${wppMsg}" target="_blank">WhatsApp</a>
+    </div>`;
+  }).join('');
+}
+function filterClients(v) { searchTerm = v.toLowerCase(); renderClientes(); }
+
+// ── EXPORT CSV ──
+function exportCSV() {
+  const header = "Nome,Telefone,WhatsApp,Barbeiro,Último serviço,Última data,Agendamentos\n";
+  const rows = CLIENTES.map(c =>
+    `"${c.nome}","${c.tel}","${c.wpp}","${c.barbeiro}","${c.servico}","${c.data}","${c.agendamentos}"`
+  ).join('\n');
+  const blob = new Blob([header+rows], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='clientes_barbearia.csv';
+  a.click(); URL.revokeObjectURL(url);
+}
+
+// ── INIT ──
+renderBooking();
+</script>
+</body>
+</html>
